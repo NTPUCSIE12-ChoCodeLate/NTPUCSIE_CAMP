@@ -110,6 +110,9 @@ zombie_spawn_speed = 180  # 初始生成速度
 selected_plant = "normal"
 plant_menu = {"normal": GREEN, "sunflower": YELLOW}
 
+# 載入圖片
+image = pygame.image.load('image/bullet.png')
+
 # 遊戲循環
 running = True
 while running:
@@ -119,6 +122,7 @@ while running:
     for row in range(0, SCREEN_HEIGHT - GRID_SIZE, GRID_SIZE):
         pygame.draw.rect(screen, BLACK, (0, row, SCREEN_WIDTH, GRID_SIZE), 1)
 
+    screen.blit(image, (1, 1))
     # 繪製植物選單
     pygame.draw.rect(screen, GRAY, (0, SCREEN_HEIGHT - GRID_SIZE, SCREEN_WIDTH, GRID_SIZE))
     x_offset = 10
