@@ -9,6 +9,10 @@ SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
 FPS = 60
 GRID_SIZE = 100
 ROAD_COUNT = SCREEN_HEIGHT // GRID_SIZE - 1  # 道路數量（避開底部植物選單區域）
+TITLE_ICON_SIZE = (64, 64)
+BULLET_SIZE = (30, 30)
+GOBLIN_SIZE = (90, 100)
+TITLE = "ChocoLate"
 
 # 顏色
 WHITE = (255, 255, 255)
@@ -20,9 +24,20 @@ GRAY = (169, 169, 169)
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
 
+icon_img = pygame.image.load("image/icon.png")
+icon_img = pygame.transform.scale(icon_img, TITLE_ICON_SIZE)
+
+bullet_img = pygame.image.load("image/bullet.png")
+bullet_img = pygame.transform.scale(bullet_img, BULLET_SIZE)
+
+goblin_img = pygame.image.load("image/goblin.png")
+goblin_img = pygame.transform.scale(goblin_img, GOBLIN_SIZE)
+goblin_img.set_colorkey(WHITE)
+
 # 創建遊戲窗口
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Happy")
+pygame.display.set_caption(TITLE)
+pygame.display.set_icon(icon_img)
 
 # 字體
 font = pygame.font.SysFont(None, 36)
@@ -55,19 +70,19 @@ class Plant(pygame.sprite.Sprite):
 class Zombie(pygame.sprite.Sprite):
     def __init__(self, x, y, zombie_type):
         super().__init__()
-        self.image = pygame.Surface((GRID_SIZE, GRID_SIZE))
+        self.image = goblin_img
         self.rect = self.image.get_rect(topleft=(x, y))
         self.zombie_type = zombie_type
         if zombie_type == "normal":
-            self.image.fill(RED)
+            # self.image.fill(RED)
             self.speed = 1
             self.health = 50
         elif zombie_type == "fast":
-            self.image.fill(BLUE)
+            # self.image.fill(BLUE)
             self.speed = 2
             self.health = 30
         elif zombie_type == "explosive":
-            self.image.fill(BLACK)
+            # self.image.fill(BLACK)
             self.speed = 1.2
             self.health = 100
 
@@ -80,8 +95,8 @@ class Zombie(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.image = pygame.Surface((10, 10))
-        self.image.fill(WHITE)
+        self.image = bullet_img
+        # self.image.fill(WHITE)
         self.rect = self.image.get_rect(center=(x, y))
         self.speed = 5
 
@@ -110,9 +125,6 @@ zombie_spawn_speed = 180  # 初始生成速度
 selected_plant = "normal"
 plant_menu = {"normal": GREEN, "sunflower": YELLOW}
 
-# 載入圖片
-image = pygame.image.load('image/bullet.png')
-
 # 遊戲循環
 running = True
 while running:
@@ -122,9 +134,8 @@ while running:
     for row in range(0, SCREEN_HEIGHT - GRID_SIZE, GRID_SIZE):
         pygame.draw.rect(screen, BLACK, (0, row, SCREEN_WIDTH, GRID_SIZE), 1)
 
-    screen.blit(image, (1, 1))
     # 繪製植物選單
-    pygame.draw.rect(screen, GRAY, (0, SCREEN_HEIGHT - GRID_SIZE, SCREEN_WIDTH, GRID_SIZE))
+    pygame.draw.rect(screen, BLACK, (0, SCREEN_HEIGHT - GRID_SIZE, SCREEN_WIDTH, GRID_SIZE))
     x_offset = 10
     for plant_type, color in plant_menu.items():
         pygame.draw.rect(screen, color, (x_offset, SCREEN_HEIGHT - GRID_SIZE + 10, GRID_SIZE, GRID_SIZE - 20))
