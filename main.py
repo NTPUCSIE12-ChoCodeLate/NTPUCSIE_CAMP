@@ -12,6 +12,7 @@ ROAD_COUNT = SCREEN_HEIGHT // GRID_SIZE - 1  # 道路數量（避開底部植物
 TITLE_ICON_SIZE = (64, 64)
 BULLET_SIZE = (30, 30)
 GOBLIN_SIZE = (90, 100)
+REFRESH_SIZE = (60, 60)
 TITLE = "ChocoLate"
 
 # 顏色
@@ -33,6 +34,9 @@ bullet_img = pygame.transform.scale(bullet_img, BULLET_SIZE)
 goblin_img = pygame.image.load("image/goblin.png")
 goblin_img = pygame.transform.scale(goblin_img, GOBLIN_SIZE)
 goblin_img.set_colorkey(WHITE)
+
+refresh_img = pygame.image.load("image/refresh.png")
+refresh_img = pygame.transform.scale(refresh_img, REFRESH_SIZE)
 
 # 創建遊戲窗口
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -105,6 +109,17 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.x > SCREEN_WIDTH:
             self.kill()
 
+#遊戲結束畫面
+def game_over():
+    overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    overlay.fill(BLACK)
+    overlay.set_alpha(150)
+    screen.blit(overlay, (0, 0))
+    game_over_font = pygame.font.SysFont(None, 80)
+    game_over_text = game_over_font.render(f"Game Over", True, RED)
+    text_x = (SCREEN_WIDTH - game_over_text.get_width()) / 2
+    text_y = SCREEN_HEIGHT / 2 - 100
+    screen.blit(game_over_text, (text_x, text_y))
 
 # 遊戲組件
 plants = pygame.sprite.Group()
@@ -117,13 +132,25 @@ clock = pygame.time.Clock()
 # 遊戲變數
 score = 0
 zombies_escaped = 0
-game_over = False
+is_game_over = False
 spawn_timer = 0
 zombie_spawn_speed = 180  # 初始生成速度
 
 # 選擇植物
 selected_plant = "normal"
 plant_menu = {"normal": GREEN, "sunflower": YELLOW}
+
+#儲存植物放置位置
+plant_position = []
+one_line = []
+for i in range(7):
+    one_line.append(False)
+for i in range(5):
+    plant_position.append(one_line.copy())
+for i in range(5):
+    for j in range(7):
+        print(plant_position[i][j], end = " ")
+    print()
 
 # 遊戲循環
 running = True
@@ -155,15 +182,21 @@ while running:
                         selected_plant = plant_type
                     x_offset += GRID_SIZE + 10
             else:  # 點擊放置植物
-                grid_x = x // GRID_SIZE * GRID_SIZE
-                grid_y = y // GRID_SIZE * GRID_SIZE
-                if score >= 5:
-                    plant = Plant(grid_x, grid_y, selected_plant)
+                x_position = x // GRID_SIZE
+                y_position = y // GRID_SIZE
+                if score >= 5 and x_position < 7 and plant_position[y_position][x_position] == False:
+                    plant = Plant(x_position * GRID_SIZE, y_position * GRID_SIZE, selected_plant)
                     plants.add(plant)
                     score -= 5
+                    plant_position[y_position][x_position] = True
+                    print(x_position, y_position)
+                    for i in range(5):
+                        for j in range(7):
+                            print(plant_position[i][j], end = " ")
+                        print()
 
     # 更新分數
-    if not game_over:
+    if not is_game_over:
         score += 1 / FPS
 
     # 生產殭屍
@@ -207,9 +240,10 @@ while running:
         # 檢測殭屍是否走出屏幕
         if zombie.rect.right < 0:
             zombie.kill()
-            zombies_escaped += 1
-            if zombies_escaped >= 5:
-                game_over = True
+            if zombies_escaped < 5:
+                zombies_escaped += 1
+                if zombies_escaped == 5:
+                    is_game_over = True
 
     # 繪製物件
     plants.draw(screen)
@@ -232,9 +266,8 @@ while running:
     screen.blit(escape_text, (10, 10))
 
     # 顯示遊戲結束
-    if game_over:
-        game_over_text = font.render("GAME OVER", True, RED)
-        screen.blit(game_over_text, (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2))
+    if is_game_over:
+        game_over()
 
     pygame.display.flip()
     clock.tick(FPS)
