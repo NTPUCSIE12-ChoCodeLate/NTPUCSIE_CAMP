@@ -120,6 +120,9 @@ def game_over():
     text_x = (SCREEN_WIDTH - game_over_text.get_width()) / 2
     text_y = SCREEN_HEIGHT / 2 - 100
     screen.blit(game_over_text, (text_x, text_y))
+    refresh_x = (SCREEN_WIDTH - refresh_img.get_width()) / 2
+    refresh_y = SCREEN_HEIGHT / 2
+    screen.blit(refresh_img, (refresh_x, refresh_y))
 
 # 遊戲組件
 plants = pygame.sprite.Group()
@@ -147,10 +150,6 @@ for i in range(7):
     one_line.append(False)
 for i in range(5):
     plant_position.append(one_line.copy())
-for i in range(5):
-    for j in range(7):
-        print(plant_position[i][j], end = " ")
-    print()
 
 # 遊戲循環
 running = True
@@ -175,25 +174,35 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = pygame.mouse.get_pos()
-            if y > SCREEN_HEIGHT - GRID_SIZE:  # 點擊選單區域
-                x_offset = 10
-                for plant_type in plant_menu.keys():
-                    if x_offset <= x <= x_offset + GRID_SIZE:
-                        selected_plant = plant_type
-                    x_offset += GRID_SIZE + 10
-            else:  # 點擊放置植物
-                x_position = x // GRID_SIZE
-                y_position = y // GRID_SIZE
-                if score >= 5 and x_position < 7 and plant_position[y_position][x_position] == False:
-                    plant = Plant(x_position * GRID_SIZE, y_position * GRID_SIZE, selected_plant)
-                    plants.add(plant)
-                    score -= 5
-                    plant_position[y_position][x_position] = True
-                    print(x_position, y_position)
-                    for i in range(5):
-                        for j in range(7):
-                            print(plant_position[i][j], end = " ")
-                        print()
+            if is_game_over:
+                if (SCREEN_WIDTH - refresh_img.get_width()) / 2 < x < (SCREEN_WIDTH + refresh_img.get_width()) / 2 and SCREEN_HEIGHT / 2 < y < SCREEN_HEIGHT / 2 + refresh_img.get_height():
+                    score = 0
+                    zombies_escaped = 0
+                    is_game_over = False
+                    spawn_timer = 0
+                    zombie_spawn_speed = 180
+                    for zombie in zombies:
+                        zombie.kill()
+                    for plant in plants:
+                        plant.kill()
+                    for bullet in bullets:
+                        bullet.kill()
+                    is_game_over = False
+            else:
+                if y > SCREEN_HEIGHT - GRID_SIZE:  # 點擊選單區域
+                    x_offset = 10
+                    for plant_type in plant_menu.keys():
+                        if x_offset <= x <= x_offset + GRID_SIZE:
+                            selected_plant = plant_type
+                        x_offset += GRID_SIZE + 10
+                else:  # 點擊放置植物
+                    x_position = x // GRID_SIZE
+                    y_position = y // GRID_SIZE
+                    if score >= 5 and x_position < 7 and plant_position[y_position][x_position] == False:
+                        plant = Plant(x_position * GRID_SIZE, y_position * GRID_SIZE, selected_plant)
+                        plants.add(plant)
+                        score -= 5
+                        plant_position[y_position][x_position] = True
 
     # 更新分數
     if not is_game_over:
