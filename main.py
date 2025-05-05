@@ -22,16 +22,39 @@ BRICK_COLS = 8
 BRICK_WIDTH = (WIDTH - 100) // BRICK_COLS
 BRICK_HEIGHT = 30
 
+# 載入圖片
 brick_image = pygame.image.load(os.path.join("images", "chocolate.png"))
 brick_image = pygame.transform.scale(brick_image, (BRICK_WIDTH - 6, BRICK_HEIGHT - 6))
 brick_image.set_colorkey((0, 0, 0))  # 設定透明色
+paddle_image = pygame.image.load(os.path.join("images", "wood.png"))
+paddle_image = pygame.transform.scale(paddle_image, (PADDLE_WIDTH, PADDLE_HEIGHT))
 
-def show_message(text, color):
+def show_message(text, color, size, center):
+    font = pygame.font.SysFont(None, size)
     msg = font.render(text, True, color)
-    rect = msg.get_rect(center=(WIDTH//2, HEIGHT//2))
+    rect = msg.get_rect(center=center)
     screen.blit(msg, rect)
-    pygame.display.flip()
-    pygame.time.wait(2000)
+
+def start_game():
+    global score, all_sprites, balls, bricks, paddle
+    Ball.speed = 5
+    score = 0
+    all_sprites = pygame.sprite.Group()
+    balls = pygame.sprite.Group()
+    bricks = pygame.sprite.Group()
+    all_sprites.empty()
+    balls.empty()
+    bricks.empty()
+    paddle = Paddle()
+    all_sprites.add(paddle)
+    ball = Ball()
+    balls.add(ball)
+    all_sprites.add(ball)
+    for r in range(BRICK_ROWS):
+        for c in range(BRICK_COLS):
+            brick = Brick(50 + (c + 0.5) * BRICK_WIDTH, 50 + (r + 0.5) * BRICK_HEIGHT)
+            bricks.add(brick)
+    all_sprites.add(bricks)
 
 class Brick(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -43,8 +66,7 @@ class Brick(pygame.sprite.Sprite):
 class Paddle(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((PADDLE_WIDTH, PADDLE_HEIGHT))
-        self.image.fill(BLUE)
+        self.image = paddle_image
         self.rect = self.image.get_rect()
         self.rect.topleft = (WIDTH//2 - PADDLE_WIDTH//2, HEIGHT - 50)
         self.speed = 10
@@ -61,16 +83,17 @@ class Paddle(pygame.sprite.Sprite):
                 self.rect.right = WIDTH
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self):
+    speed = 5
+    def __init__(self, angle = math.pi / 4, center = (WIDTH//2, HEIGHT - 100)):
         super().__init__()
         radius = 10
         diameter = radius * 2
         self.image = pygame.Surface((diameter, diameter), pygame.SRCALPHA)  # 使用 SRCALPHA 支援透明背景
         pygame.draw.circle(self.image, WHITE, (radius, radius), radius)
         self.rect = self.image.get_rect()
-        self.rect.center = (WIDTH//2, HEIGHT - 100)
-        self.dx = 4
-        self.dy = -4
+        self.rect.center = center
+        self.dx = Ball.speed * math.cos(angle)
+        self.dy = -Ball.speed * math.sin(angle)
         self.speed_factor = 1.03
 
     def update(self):
@@ -86,8 +109,11 @@ class Ball(pygame.sprite.Sprite):
         if self.rect.top <= 0:
             self.rect.top = 0
             self.dy = -self.dy
+        elif self.rect.top >= HEIGHT:
+            self.kill()
 
-    def hit_brick(self, brick_rect):
+    def hit_brick(self, brick_rect, score):
+        Ball.speed *= self.speed_factor
         self.dx *= self.speed_factor
         self.dy *= self.speed_factor
         if abs(self.rect.right - brick_rect.left) < 10 and self.dx > 0:
@@ -102,31 +128,23 @@ class Ball(pygame.sprite.Sprite):
         elif abs(self.rect.top - brick_rect.bottom) < 10 and self.dy < 0:
             self.rect.top = brick_rect.bottom
             self.dy = -self.dy
+        if score % 5 == 0:
+            self.create_new_ball()
+    
+    def create_new_ball(self):
+        new_ball = Ball(math.pi * 3 / 4, (self.rect.centerx, self.rect.centery))
+        balls.add(new_ball)
+        all_sprites.add(new_ball)
 
     def hit_paddle(self, paddle_rect):
-        speed = math.sqrt(self.dx ** 2 + self.dy ** 2)
         max_angle = math.pi / 3
         offset = (self.rect.centerx - paddle_rect.centerx) / (paddle_rect.width / 2)
         angle = offset * max_angle
-        self.dx = math.sin(angle) * speed
-        self.dy = -math.cos(angle) * speed
+        self.dx = math.sin(angle) * Ball.speed
+        self.dy = -math.cos(angle) * Ball.speed
 
 clock = pygame.time.Clock()
-font = pygame.font.SysFont(None, 48)
-
-all_sprites = pygame.sprite.Group()
-balls = pygame.sprite.Group()
-bricks = pygame.sprite.Group()
-paddle = Paddle()
-all_sprites.add(paddle)
-ball = Ball()
-balls.add(ball)
-all_sprites.add(ball)
-for r in range(BRICK_ROWS):
-    for c in range(BRICK_COLS):
-        brick = Brick(50 + (c + 0.5) * BRICK_WIDTH, 50 + (r + 0.5) * BRICK_HEIGHT)
-        bricks.add(brick)
-all_sprites.add(bricks)
+start_game()
 
 # 主迴圈
 running = True
@@ -143,23 +161,31 @@ while running:
         ball.hit_paddle(paddle.rect)
 
     # 碰磚塊
-    hits = pygame.sprite.groupcollide(balls, bricks, False, True)
-    for ball, hit_bricks in hits.items():
-        for brick in hit_bricks:
-            ball.hit_brick(brick.rect)
-
-    # 遊戲結束判斷
-    if ball.rect.bottom >= HEIGHT:
-        show_message("You loss!", RED)
-        running = False
-    elif not bricks:
-        show_message("You win!", GREEN)
-        running = False
+    hits = pygame.sprite.groupcollide(bricks, balls, False, False)
+    for hit_brick, hit_balls in hits.items():
+        score += 1
+        hit_balls[0].hit_brick(hit_brick.rect, score)
+        hit_brick.kill()
 
     all_sprites.update()
 
     screen.fill(BLACK)
     all_sprites.draw(screen)
+    show_message(f"Score: {score}", WHITE, 32, (WIDTH//2, 25))
+
+    # 遊戲結束判斷
+    if not balls:
+        show_message("You loss!", RED, 56, (WIDTH//2, HEIGHT//2))
+        pygame.display.flip()
+        pygame.time.wait(2000)
+        start_game()
+
+    elif not bricks:
+        show_message("You win!", GREEN, 56, (WIDTH//2, HEIGHT//2))
+        pygame.display.flip()
+        pygame.time.wait(2000)
+        running = False
+
     pygame.display.flip()
 
 pygame.quit()
