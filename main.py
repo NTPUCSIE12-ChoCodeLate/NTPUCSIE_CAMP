@@ -1,5 +1,6 @@
 import pygame
 import math
+import os
 
 # 初始化
 pygame.init()
@@ -21,6 +22,10 @@ BRICK_COLS = 8
 BRICK_WIDTH = (WIDTH - 100) // BRICK_COLS
 BRICK_HEIGHT = 30
 
+brick_image = pygame.image.load(os.path.join("images", "chocolate.png"))
+brick_image = pygame.transform.scale(brick_image, (BRICK_WIDTH - 6, BRICK_HEIGHT - 6))
+brick_image.set_colorkey((0, 0, 0))  # 設定透明色
+
 def show_message(text, color):
     msg = font.render(text, True, color)
     rect = msg.get_rect(center=(WIDTH//2, HEIGHT//2))
@@ -31,8 +36,7 @@ def show_message(text, color):
 class Brick(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.image = pygame.Surface((BRICK_WIDTH - 6, BRICK_HEIGHT - 6))
-        self.image.fill(GREEN)
+        self.image = brick_image
         self.rect = self.image.get_rect()
         self.rect.center = x, y
 
@@ -101,8 +105,8 @@ class Ball(pygame.sprite.Sprite):
 
     def hit_paddle(self, paddle_rect):
         speed = math.sqrt(self.dx ** 2 + self.dy ** 2)
-        offset = (self.rect.centerx - paddle_rect.centerx) / (paddle_rect.width / 2)
         max_angle = math.pi / 3
+        offset = (self.rect.centerx - paddle_rect.centerx) / (paddle_rect.width / 2)
         angle = offset * max_angle
         self.dx = math.sin(angle) * speed
         self.dy = -math.cos(angle) * speed
