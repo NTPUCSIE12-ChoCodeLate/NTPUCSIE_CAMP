@@ -23,11 +23,16 @@ BRICK_WIDTH = (WIDTH - 100) // BRICK_COLS
 BRICK_HEIGHT = 30
 
 # 載入圖片
-brick_image = pygame.image.load(os.path.join("images", "chocolate.png"))
+brick_image = pygame.image.load(os.path.join("img", "chocolate.png"))
 brick_image = pygame.transform.scale(brick_image, (BRICK_WIDTH - 6, BRICK_HEIGHT - 6))
 brick_image.set_colorkey((0, 0, 0))  # 設定透明色
-paddle_image = pygame.image.load(os.path.join("images", "wood.png"))
+paddle_image = pygame.image.load(os.path.join("img", "wood.png"))
 paddle_image = pygame.transform.scale(paddle_image, (PADDLE_WIDTH, PADDLE_HEIGHT))
+background_img = pygame.image.load(os.path.join('img', 'background.jpg')).convert()
+background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
+ball_img = pygame.image.load(os.path.join('img', 'ball.png')).convert()
+ball_img = pygame.transform.scale(ball_img, (10 * 2, 10 * 2))
+ball_img.set_colorkey(BLACK)
 
 def show_message(text, color, size, center):
     font = pygame.font.SysFont(None, size)
@@ -88,8 +93,7 @@ class Ball(pygame.sprite.Sprite):
         super().__init__()
         radius = 10
         diameter = radius * 2
-        self.image = pygame.Surface((diameter, diameter), pygame.SRCALPHA)  # 使用 SRCALPHA 支援透明背景
-        pygame.draw.circle(self.image, WHITE, (radius, radius), radius)
+        self.image = ball_img
         self.rect = self.image.get_rect()
         self.rect.center = center
         self.dx = Ball.speed * math.cos(angle)
@@ -161,15 +165,14 @@ while running:
         ball.hit_paddle(paddle.rect)
 
     # 碰磚塊
-    hits = pygame.sprite.groupcollide(bricks, balls, False, False)
+    hits = pygame.sprite.groupcollide(bricks, balls, True, False)
     for hit_brick, hit_balls in hits.items():
         score += 1
         hit_balls[0].hit_brick(hit_brick.rect, score)
-        hit_brick.kill()
 
     all_sprites.update()
 
-    screen.fill(BLACK)
+    screen.blit(background_img, (0, 0))
     all_sprites.draw(screen)
     show_message(f"Score: {score}", WHITE, 32, (WIDTH//2, 25))
 
