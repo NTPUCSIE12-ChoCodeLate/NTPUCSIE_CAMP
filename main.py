@@ -3,8 +3,6 @@ import math
 import random
 import os
 
-t = 1.5
-
 FPS = 60
 # 大小設定
 WIDTH, HEIGHT = 800, 700
@@ -58,7 +56,7 @@ game_over_img = pygame.transform.scale(game_over_img, (GAME_OVER_LEN, GAME_OVER_
 game_over_img.set_colorkey(BLACK)
 
 # 載入音效
-hit_sound = pygame.mixer.Sound(os.path.join('sound', 'hit.wav'))
+hit_sound = pygame.mixer.Sound(os.path.join('sound', 'hit.mp3'))
 
 font_path = 'font.ttf'
 
@@ -103,11 +101,11 @@ def start_game():
     # 初始宣告遊戲物件
     all_sprites = pygame.sprite.Group()
     # 板子
-    board = Board((WIDTH // 2, HEIGHT - 40 * t))
+    board = Board((WIDTH // 2, HEIGHT - 60))
     all_sprites.add(board)
     # 球
     balls = pygame.sprite.Group()
-    ball = Ball(math.pi / 4, (WIDTH // 2, HEIGHT - 100 * t))
+    ball = Ball(math.pi / 4, (WIDTH // 2, HEIGHT - 150))
     balls.add(ball)
     all_sprites.add(ball)
     # 磚塊
@@ -135,7 +133,7 @@ class Board(pygame.sprite.Sprite):
         self.image = board_img
         self.rect = self.image.get_rect()
         self.rect.center = center
-        self.speed = 10 * t
+        self.speed = 15
     
     def update(self):
         keys = pygame.key.get_pressed()
@@ -156,8 +154,8 @@ class Ball(pygame.sprite.Sprite):
         self.image = ball_img
         self.rect = self.image.get_rect()
         self.rect.center = center
-        self.dx = Ball.speed * math.cos(angle)
-        self.dy = -Ball.speed * math.sin(angle)
+        self.dx = Ball.speed * math.sin(angle)
+        self.dy = -Ball.speed * math.cos(angle)
         self.speed_factor = 1.03
 
     def update(self):
@@ -209,7 +207,7 @@ class Ball(pygame.sprite.Sprite):
             self.create_new_ball()
     
     def create_new_ball(self):
-        new_ball = Ball(math.pi * 3 / 4, self.rect.center)
+        new_ball = Ball(-math.pi / 4, self.rect.center)
         balls.add(new_ball)
         all_sprites.add(new_ball)
 
